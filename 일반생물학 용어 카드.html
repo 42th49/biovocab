@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>일반생물학 용어 카드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF3F4;--paper:#FFFFFF;--ink:#1D2733;--mute:#66757F;--line:#CFD9DD;--hema:#3E3A7A;--eosin:#C9476F;--ok:#2B7F72;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141A20;--paper:#1E2730;--ink:#E6ECEF;--mute:#93A2AC;--line:#33414C;--hema:#A9A3F0;--eosin:#F08AAA;--ok:#5FC2B1}}
+:root[data-theme="dark"]{--bg:#141A20;--paper:#1E2730;--ink:#E6ECEF;--mute:#93A2AC;--line:#33414C;--hema:#A9A3F0;--eosin:#F08AAA;--ok:#5FC2B1}
+*{box-sizing:inherit}html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:20px 16px 32px}
+h1{font-size:1.35rem;margin:4px 0 16px;font-weight:700;letter-spacing:-.01em}
+.seg{display:flex;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:transparent;color:var(--mute);font:inherit;font-size:.92rem;padding:8px 6px;border-radius:7px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--hema);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{color:#141A20}}
+.meta{display:flex;justify-content:space-between;align-items:baseline;font-size:.88rem;color:var(--mute);margin:14px 2px 8px}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:14px}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .3s}
+.scene{perspective:1200px;cursor:pointer;outline:none}
+.card{position:relative;height:300px;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.3,.7,.3,1)}
+.card.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--paper);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center}
+.face::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:5px;border-radius:0 3px 3px 0;background:var(--hema)}
+.back{transform:rotateY(180deg)}.back::before{background:var(--eosin)}
+.en{font-family:"Source Serif 4",Georgia,serif;font-size:clamp(1.7rem,6vw,2.4rem);font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.ko{font-size:clamp(1.3rem,5vw,1.75rem);font-weight:500;line-height:1.35;word-break:keep-all}
+.ko small{display:block;font-size:.95rem;color:var(--mute);font-weight:400;margin-top:8px}
+.hint{position:absolute;bottom:14px;font-size:.8rem;color:var(--mute)}
+.scene:focus-visible .face{outline:2px solid var(--hema);outline-offset:3px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.acts button,.tools button{font:inherit;border-radius:10px;padding:12px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.acts .again{border-color:var(--eosin);color:var(--eosin)}
+.acts .know{background:var(--ok);border-color:var(--ok);color:#fff}
+.tools{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}.tools button{flex:1;font-size:.88rem;padding:9px;color:var(--mute)}
+button:focus-visible{outline:2px solid var(--hema);outline-offset:2px}
+.done{text-align:center;padding:40px 10px}.done p{color:var(--mute)}
+.keys{font-size:.8rem;color:var(--mute);margin-top:14px;text-align:center}
+@media (prefers-reduced-motion:reduce){.card,.bar i{transition:none}}
+</style></head><body><main>
+<h1>일반생물학 용어 카드</h1>
+<div class="seg" id="deckSeg"></div>
+<div class="seg" id="dirSeg">
+ <button data-dir="en" aria-pressed="true">영어 → 한국어</button>
+ <button data-dir="ko" aria-pressed="false">한국어 → 영어</button>
+</div>
+<div class="meta"><span id="count"></span><span id="known"></span></div>
+<div class="bar"><i id="fill"></i></div>
+<div id="stage"></div>
+<div class="tools">
+ <button id="shuffle">순서 섞기</button>
+ <button id="restart">이번 회차 다시</button>
+ <button id="reset">외운 표시 모두 지우기</button>
+</div>
+<p class="keys">단축키: Space 뒤집기, → 또는 K 외웠음, ← 또는 J 다시 보기</p>
+</main>
+<script>
+const DECKS = {"membrane": {"name": "세포막", "cards": [["cell membrane", "세포막"], ["lipid", "지질"], ["phospholipid", "인지질"], ["amphipathic", "양친매성의"], ["glycolipid", "당지질"], ["glycoprotein", "당단백질"], ["hydrophobic", "소수성의"], ["hydrophilic", "친수성의"], ["fluidity", "유동성"], ["consistency", "점조도 (묽고 끈끈한 정도)"], ["chloroform", "클로로폼"], ["polar", "극성의"], ["electron micrograph", "전자현미경 사진"], ["vesicle", "소낭"], ["cytoskeleton", "세포골격"], ["extracellular matrix", "세포외기질 (ECM)"], ["FRAP", "광표백 후 형광 회복법 (Fluorescence Recovery After Photobleaching)"], ["reagent", "시약"], ["integral protein", "내재성 단백질"], ["transmembrane protein", "막관통 단백질"], ["peripheral protein", "표재성 단백질 (주변 단백질)"], ["monotopic", "단일면 결합성 (막의 한쪽 면에만 박힌 막단백질)"], ["junction", "(세포) 연접"], ["plasma membrane", "원형질막"], ["hypotonic", "저장성의"], ["isotonic", "등장성의"], ["hypertonic", "고장성의"], ["osmoregulation", "삼투조절"], ["paramecium", "짚신벌레"], ["protist", "원생생물"], ["contractile vacuole", "수축포"], ["plasmolysis", "원형질 분리"], ["turgor pressure", "팽압"], ["endocrine gland", "내분비샘"], ["lignin", "리그닌"], ["cytoplasm", "세포질"], ["Saccharomyces cerevisiae", "출아효모 (사카로미세스 세레비시에)"], ["myxobacteria", "점액세균"], ["fruiting body", "자실체"], ["quorum sensing", "정족수 감지"], ["phosphorylation", "인산화"]]}, "division": {"name": "세포분열과 유전", "cards": [["unicellular", "단세포의"], ["eukaryote", "진핵생물"], ["centromere", "동원체 (센트로미어)"], ["chromatid", "염색분체"], ["mitosis", "체세포 분열 (유사분열)"], ["cytokinesis", "세포질 분열"], ["interphase", "간기"], ["prophase", "전기"], ["metaphase", "중기"], ["anaphase", "후기"], ["telophase", "말기"], ["microtubule", "미세소관"], ["cleavage furrow", "분열구"], ["cell plate", "세포판"], ["homologous", "상동의"], ["diploid", "이배체의 (2n)"], ["haploid", "반수체의 (n)"], ["synaptonemal complex", "연접 복합체 (시냅토네마 복합체)"], ["synapsis", "(상동염색체의) 접합"], ["cohesion", "(자매염색분체의) 응집"], ["gamete", "생식세포 (배우자)"], ["spore", "포자"], ["asexual reproduction", "무성생식"], ["mitotic spindle", "방추체 (유사분열 방추사)"], ["platelet", "혈소판"], ["PDGF", "혈소판 유래 성장 인자 (Platelet-Derived Growth Factor)"], ["fibroblast", "섬유아세포"], ["benign tumor", "양성 종양"], ["malignant tumor", "악성 종양"], ["metastasis", "전이"], ["allele", "대립유전자"], ["autosome", "상염색체"], ["phenotype", "표현형"], ["zygote", "접합자 (수정란)"], ["embryo", "배아"], ["recessive", "열성의"], ["hemizygous", "반접합성의"], ["dihybrid", "양성잡종"], ["vestigial", "흔적의 (초파리의 흔적날개 형질)"], ["loci", "유전자좌 (locus의 복수형)"], ["aristae", "아리스타 (초파리 더듬이 끝의 깃털 모양 강모, arista의 복수형)"], ["nondisjunction", "비분리"], ["aneuploidy", "이수성 (염색체 수 이상)"], ["polyploidy", "배수성 (3n 이상의 염색체 세트)"], ["deletion", "결실"], ["duplication", "중복"], ["inversion", "역위"], ["translocation", "전좌"], ["organelle", "세포소기관"], ["chloroplast", "엽록체"], ["myopathy", "근육병증"], ["monomer", "단량체"], ["nucleotide", "뉴클레오타이드"]]}};
+DECKS.all = {name:"전체", cards:[...DECKS.membrane.cards, ...DECKS.division.cards]};
+const ORDER=["membrane","division","all"];
+let st={deck:"membrane",dir:"en",known:{}};
+try{const s=JSON.parse(localStorage.getItem("bioCards")||"null");if(s)st=Object.assign(st,s);}catch(e){}
+const save=()=>{try{localStorage.setItem("bioCards",JSON.stringify(st));}catch(e){}};
+let queue=[],flipped=false;
+const $=id=>document.getElementById(id);
+function split(ko){const m=ko.match(/^(.*?)\s*\((.+)\)$/);return m&&!ko.startsWith("(")?[m[1],m[2]]:[ko,""];}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function cards(){return DECKS[st.deck].cards;}
+function build(shuffle){queue=cards().map((c,i)=>i).filter(i=>!st.known[st.deck+"|"+cards()[i][0]]);if(shuffle)for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]];}flipped=false;render();}
+function render(){
+ const total=cards().length,known=cards().filter(c=>st.known[st.deck+"|"+c[0]]).length;
+ $("count").textContent=`남은 카드 ${queue.length}장`;$("known").textContent=`외움 ${known} / ${total}`;
+ $("fill").style.width=(known/total*100)+"%";
+ document.querySelectorAll("#deckSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.deck===st.deck));
+ document.querySelectorAll("#dirSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.dir===st.dir));
+ if(!queue.length){$("stage").innerHTML=known===total?`<div class="done"><strong>이 단원 ${total}개 용어를 모두 외웠어요.</strong><p>아래 ‘외운 표시 모두 지우기’로 처음부터 다시 볼 수 있어요.</p></div>`:`<div class="done"><strong>이번 회차 끝.</strong><p>‘다시 보기’로 넘긴 카드만 다시 나오도록 ‘이번 회차 다시’를 누르세요.</p></div>`;return;}
+ const [en,ko]=cards()[queue[0]],[k1,k2]=split(ko);
+ const enH=`<div class="en">${esc(en)}</div>`,koH=`<div class="ko">${esc(k1)}${k2?`<small>${esc(k2)}</small>`:""}</div>`;
+ const front=st.dir==="en"?enH:koH,back=st.dir==="en"?koH:enH;
+ $("stage").innerHTML=`<div class="scene" id="scene" tabindex="0" role="button" aria-label="카드 뒤집기"><div class="card${flipped?" flip":""}" id="card"><div class="face">${front}<span class="hint">눌러서 뒤집기</span></div><div class="face back">${back}</div></div></div><div class="acts"><button class="again" id="again">다시 보기</button><button class="know" id="know">외웠음</button></div>`;
+ $("scene").onclick=flip;$("again").onclick=()=>next(false);$("know").onclick=()=>next(true);
+}
+function flip(){flipped=!flipped;const c=$("card");if(c)c.classList.toggle("flip",flipped);}
+function next(knew){if(!queue.length)return;const i=queue.shift();if(knew){st.known[st.deck+"|"+cards()[i][0]]=1;save();}else{queue.splice(Math.min(queue.length,3+Math.floor(Math.random()*3)),0,i);}flipped=false;render();}
+$("deckSeg").innerHTML=ORDER.map(k=>`<button data-deck="${k}">${DECKS[k].name} <span style="opacity:.7">${DECKS[k].cards.length}</span></button>`).join("");
+$("deckSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.deck=b.dataset.deck;save();build(true);};
+$("dirSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;st.dir=b.dataset.dir;save();flipped=false;render();};
+$("shuffle").onclick=()=>build(true);
+$("restart").onclick=()=>build(true);
+$("reset").onclick=()=>{Object.keys(st.known).forEach(k=>{if(st.deck==="all"||k.startsWith(st.deck+"|"))delete st.known[k];});if(st.deck==="all")st.known={};save();build(true);};
+document.addEventListener("keydown",e=>{if(e.target.tagName==="BUTTON"&&e.key===" ")return;if(e.key===" "){e.preventDefault();flip();}else if(e.key==="ArrowRight"||e.key==="k")next(true);else if(e.key==="ArrowLeft"||e.key==="j")next(false);});
+build(true);
+</script></body></html>
